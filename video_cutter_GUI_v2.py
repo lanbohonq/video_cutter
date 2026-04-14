@@ -15,7 +15,7 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QSlider, QLabel, QFileDialog, QListWidget, QListWidgetItem,
-    QMessageBox, QProgressBar, QGroupBox, QLineEdit, QFrame
+    QMessageBox, QProgressBar, QGroupBox, QLineEdit, QFrame, QDialog
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QMutex
 from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
@@ -331,23 +331,17 @@ class VideoCutterGUI(QMainWindow):
         controls_layout.addSpacing(20)
 
         # 标记按钮
-        self.btn_set_in = QPushButton("I 入点")
+        self.btn_set_in = QPushButton("🟢 标记入点")
         self.btn_set_in.clicked.connect(self.set_in_point)
         self.btn_set_in.setEnabled(False)
         controls_layout.addWidget(self.btn_set_in)
 
-        self.btn_set_out = QPushButton("O 出点")
+        self.btn_set_out = QPushButton("🔴 标记出点")
         self.btn_set_out.clicked.connect(self.set_out_point)
         self.btn_set_out.setEnabled(False)
         controls_layout.addWidget(self.btn_set_out)
 
         controls_layout.addStretch()
-
-        # 导出按钮
-        self.btn_export = QPushButton("🎬 导出片段")
-        self.btn_export.clicked.connect(self.export_segments)
-        self.btn_export.setEnabled(False)
-        controls_layout.addWidget(self.btn_export)
 
         main_layout.addLayout(controls_layout)
 
@@ -364,15 +358,22 @@ class VideoCutterGUI(QMainWindow):
 
         self.segments_list = QListWidget()
         self.segments_list.setMinimumHeight(120)
+        self.segments_list.itemDoubleClicked.connect(self.edit_segment)
+        self.segments_list.itemSelectionChanged.connect(self.on_segment_selection_changed)
         segments_layout.addWidget(self.segments_list)
 
         list_btn_layout = QHBoxLayout()
-        self.btn_delete_segment = QPushButton("🗑 删除选中")
+        self.btn_edit_segment = QPushButton("编辑")
+        self.btn_edit_segment.clicked.connect(self.edit_segment)
+        self.btn_edit_segment.setEnabled(False)
+        list_btn_layout.addWidget(self.btn_edit_segment)
+
+        self.btn_delete_segment = QPushButton("删除")
         self.btn_delete_segment.clicked.connect(self.delete_segment)
         self.btn_delete_segment.setEnabled(False)
         list_btn_layout.addWidget(self.btn_delete_segment)
 
-        self.btn_clear_all = QPushButton("🗑 清空全部")
+        self.btn_clear_all = QPushButton("清空")
         self.btn_clear_all.clicked.connect(self.clear_all_segments)
         self.btn_clear_all.setEnabled(False)
         list_btn_layout.addWidget(self.btn_clear_all)
@@ -393,6 +394,11 @@ class VideoCutterGUI(QMainWindow):
         self.btn_browse = QPushButton("📁 浏览")
         self.btn_browse.clicked.connect(self.browse_output_dir)
         output_layout.addWidget(self.btn_browse)
+
+        self.btn_export = QPushButton("🎬 导出片段")
+        self.btn_export.clicked.connect(self.export_segments)
+        self.btn_export.setEnabled(False)
+        output_layout.addWidget(self.btn_export)
 
         main_layout.addLayout(output_layout)
 
@@ -788,6 +794,7 @@ class VideoCutterGUI(QMainWindow):
         self.segments.append(segment)
         self.update_segments_list()
         self.btn_export.setEnabled(True)
+        self.btn_edit_segment.setEnabled(True)
         self.btn_clear_all.setEnabled(True)
 
     def update_segments_list(self):
@@ -798,12 +805,89 @@ class VideoCutterGUI(QMainWindow):
             item = QListWidgetItem(item_text)
             self.segments_list.addItem(item)
 
+    def on_segment_selection_changed(self):
+        """片段选择变化"""
+        has_selection = self.segments_list.currentRow() >= 0
+        self.btn_edit_segment.setEnabled(has_selection)
+        self.btn_delete_segment.setEnabled(has_selection)
+
+    def edit_segment(self):
+        """编辑选中的片段"""
+        current_row = self.segments_list.currentRow()
+        if current_row < 0:
+            return
+
+        start, end = self.segments[current_row]
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"编辑片段 #{current_row + 1}")
+        dialog.setModal(True)
+        dialog.setMinimumWidth(300)
+
+        layout = QVBoxLayout(dialog)
+
+        form_layout = QHBoxLayout()
+        form_layout.addWidget(QLabel("开始:"))
+        start_edit = QLineEdit(self.format_time(start))
+        start_edit.setStyleSheet("font-family: monospace;")
+        form_layout.addWidget(start_edit)
+        form_layout.addWidget(QLabel("结束:"))
+        end_edit = QLineEdit(self.format_time(end))
+        end_edit.setStyleSheet("font-family: monospace;")
+        form_layout.addWidget(end_edit)
+        layout.addLayout(form_layout)
+
+        hint = QLabel("格式: HH:MM:SS.ss (如 00:01:30.50)")
+        hint.setStyleSheet("color: #888; font-size: 11px;")
+        layout.addWidget(hint)
+
+        btn_layout = QHBoxLayout()
+        btn_ok = QPushButton("确定")
+        btn_cancel = QPushButton("取消")
+        btn_layout.addStretch()
+        btn_layout.addWidget(btn_ok)
+        btn_layout.addWidget(btn_cancel)
+        layout.addLayout(btn_layout)
+
+        def parse_time_str(s):
+            s = s.strip()
+            parts = s.split(":")
+            if len(parts) == 3:
+                h, m, sec = parts
+                return int(float(h) * 3600000 + float(m) * 60000 + float(sec) * 1000)
+            elif len(parts) == 2:
+                m, sec = parts
+                return int(float(m) * 60000 + float(sec) * 1000)
+            else:
+                return int(float(s) * 1000)
+
+        def on_ok():
+            try:
+                new_start = parse_time_str(start_edit.text())
+                new_end = parse_time_str(end_edit.text())
+                if new_end <= new_start:
+                    QMessageBox.warning(dialog, "错误", "结束时间必须大于开始时间")
+                    return
+                if new_start < 0 or new_end > self.duration:
+                    QMessageBox.warning(dialog, "错误", f"时间超出范围 (0 - {self.format_time(self.duration)})")
+                    return
+                self.segments[current_row] = (new_start, new_end)
+                self.update_segments_list()
+                dialog.accept()
+            except ValueError as e:
+                QMessageBox.warning(dialog, "格式错误", f"时间格式无效: {e}")
+
+        btn_ok.clicked.connect(on_ok)
+        btn_cancel.clicked.connect(dialog.reject)
+        dialog.exec()
+
     def delete_segment(self):
         """删除选中的片段"""
         current_row = self.segments_list.currentRow()
         if current_row >= 0:
             self.segments.pop(current_row)
             self.update_segments_list()
+            self.on_segment_selection_changed()
 
         self.btn_export.setEnabled(len(self.segments) > 0)
         self.btn_clear_all.setEnabled(len(self.segments) > 0)
@@ -819,6 +903,7 @@ class VideoCutterGUI(QMainWindow):
                 self.segments.clear()
                 self.update_segments_list()
                 self.btn_export.setEnabled(False)
+                self.btn_edit_segment.setEnabled(False)
                 self.btn_clear_all.setEnabled(False)
 
     def browse_output_dir(self):
