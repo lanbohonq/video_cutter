@@ -10,6 +10,7 @@
 - 🚀 **快速导出** - 使用 FFmpeg 流复制模式，无需重新编码
 - 🎹 **快捷键支持** - 完整的键盘快捷键提升操作效率
 - 🌙 **深色主题** - 现代化的深色界面设计
+- 📋 **日志记录** - 完整的操作日志，便于问题排查
 
 ## 系统要求
 
@@ -54,7 +55,7 @@ cd video_cutter
 | 文件 | 界面 | 依赖 | 特点 |
 |------|------|------|------|
 | `video_cutter_GUI_v1.py` | tkinter | 无（标准库） | 轻量级，适合快速使用 |
-| `video_cutter_GUI_v2.py` | PyQt6 | PyQt6, opencv-python, pygame | 带视频预览，功能完整 |
+| `video_cutter_GUI_v2.py` | PyQt6 | PyQt6, opencv-python, pygame | 带视频预览，功能完整（推荐） |
 | `video_cutter.py` | 命令行 | 无 | 可作为库调用 |
 
 ### 运行 v1 (tkinter 版本)
@@ -85,7 +86,8 @@ python video_cutter_GUI_v2.py
 - 音频播放支持
 - 可视化时间轴拖动
 - 完整的快捷键支持
-- 片段双击编辑
+- 片段编辑（双击或点击编辑按钮）
+- 日志记录到 `video_cutter.log`，每次运行清空
 
 ### 作为库使用
 
@@ -159,8 +161,11 @@ ffmpeg -y -ss <start> -to <end> -i <input> -c copy <output>
 
 ### 日志
 
-- v1 版本日志保存到 `video_cutter.log`，每次运行清空
-- v2 版本日志输出到控制台
+两个版本均将操作日志保存到 `video_cutter.log`：
+
+- 程序启动时清空上次日志
+- 记录关键操作：打开视频、标记片段、编辑、删除、导出等
+- 便于问题排查和操作追溯
 
 ## 项目结构
 
@@ -169,6 +174,7 @@ video_cutter/
 ├── video_cutter_GUI_v1.py   # tkinter 版本 GUI
 ├── video_cutter_GUI_v2.py   # PyQt6 版本 GUI (推荐)
 ├── video_cutter.py          # 核心函数库
+├── video_cutter.log         # 运行日志文件
 ├── AGENTS.md                # 开发者指南
 └── README.md                # 本文档
 ```

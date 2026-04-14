@@ -12,6 +12,27 @@ import traceback
 import logging
 from pathlib import Path
 
+LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_cutter.log")
+
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        filename=LOG_FILE,
+        filemode='w',
+        encoding='utf-8'
+    )
+
+def clear_log():
+    try:
+        with open(LOG_FILE, 'w', encoding='utf-8') as f:
+            f.write('')
+    except Exception:
+        pass
+
+setup_logging()
+logger = logging.getLogger(__name__)
+
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QSlider, QLabel, QFileDialog, QListWidget, QListWidgetItem,
@@ -19,12 +40,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QMutex
 from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 
 class VideoCutterError(Exception):
@@ -517,6 +532,7 @@ class VideoCutterGUI(QMainWindow):
         if file_path:
             self.input_video = file_path
             self.lbl_video_path.setText(file_path)
+            logger.info(f"打开视频: {file_path}")
             self.load_video(file_path)
 
     def load_video(self, video_path):
@@ -776,7 +792,7 @@ class VideoCutterGUI(QMainWindow):
         start_time = self.current_time
         self.in_point = start_time
         self.lbl_current_time.setText(f"入点: {self.format_time(start_time)}")
-        # 2秒后恢复
+        logger.info(f"设置入点: {self.format_time(start_time)}")
         QTimer.singleShot(2000, lambda: self.lbl_current_time.setText(self.format_time(self.current_time)))
 
     def set_out_point(self):
@@ -792,6 +808,7 @@ class VideoCutterGUI(QMainWindow):
 
         segment = (self.in_point, end_time)
         self.segments.append(segment)
+        logger.info(f"添加片段: {self.format_time(self.in_point)} - {self.format_time(end_time)}")
         self.update_segments_list()
         self.btn_export.setEnabled(True)
         self.btn_edit_segment.setEnabled(True)
@@ -872,6 +889,7 @@ class VideoCutterGUI(QMainWindow):
                     QMessageBox.warning(dialog, "错误", f"时间超出范围 (0 - {self.format_time(self.duration)})")
                     return
                 self.segments[current_row] = (new_start, new_end)
+                logger.info(f"编辑片段 #{current_row + 1}: {self.format_time(new_start)} - {self.format_time(new_end)}")
                 self.update_segments_list()
                 dialog.accept()
             except ValueError as e:
@@ -885,7 +903,8 @@ class VideoCutterGUI(QMainWindow):
         """删除选中的片段"""
         current_row = self.segments_list.currentRow()
         if current_row >= 0:
-            self.segments.pop(current_row)
+            deleted = self.segments.pop(current_row)
+            logger.info(f"删除片段 #{current_row + 1}: {self.format_time(deleted[0])} - {self.format_time(deleted[1])}")
             self.update_segments_list()
             self.on_segment_selection_changed()
 
@@ -900,7 +919,9 @@ class VideoCutterGUI(QMainWindow):
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
             if reply == QMessageBox.StandardButton.Yes:
+                count = len(self.segments)
                 self.segments.clear()
+                logger.info(f"清空所有片段，共 {count} 个")
                 self.update_segments_list()
                 self.btn_export.setEnabled(False)
                 self.btn_edit_segment.setEnabled(False)
@@ -912,6 +933,7 @@ class VideoCutterGUI(QMainWindow):
         if dir_path:
             self.output_dir = dir_path
             self.edit_output_dir.setText(dir_path)
+            logger.info(f"设置输出目录: {dir_path}")
 
     def export_segments(self):
         """导出视频片段"""
@@ -928,6 +950,8 @@ class VideoCutterGUI(QMainWindow):
 
         if not self.output_dir:
             return
+
+        logger.info(f"开始导出 {len(self.segments)} 个片段到 {self.output_dir}")
 
         try:
             if not os.path.exists(self.output_dir):
@@ -995,12 +1019,14 @@ class VideoCutterGUI(QMainWindow):
             failed_msg = "\n".join([f"片段#{idx}: {msg}" for idx, msg in failed_segments[:3]])
             if len(failed_segments) > 3:
                 failed_msg += f"\n... 还有 {len(failed_segments) - 3} 个失败"
+            logger.warning(f"导出完成: 成功 {success_count}/{total}, 失败 {len(failed_segments)}")
             QMessageBox.warning(
                 self, "导出完成（部分失败）",
                 f"成功: {success_count}/{total}\n失败: {len(failed_segments)}\n\n"
                 f"失败详情:\n{failed_msg}\n\n输出目录: {self.output_dir}"
             )
         else:
+            logger.info(f"导出完成: 成功 {success_count} 个片段")
             QMessageBox.information(
                 self, "导出完成",
                 f"成功导出 {success_count} 个片段到:\n{self.output_dir}"
@@ -1048,17 +1074,21 @@ class VideoCutterGUI(QMainWindow):
 
 
 def main():
+    clear_log()
+    logger.info("程序启动")
+    
     app = QApplication(sys.argv)
     app.setApplicationName("Video Cutter GUI")
 
-    # 设置应用程序样式
     app.setStyle('Fusion')
 
     window = VideoCutterGUI()
     window.show()
 
-    sys.exit(app.exec())
+    exit_code = app.exec()
+    logger.info("程序关闭")
+    return exit_code
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

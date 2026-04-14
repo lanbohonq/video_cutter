@@ -26,14 +26,6 @@ def setup_logging():
         encoding='utf-8'
     )
 
-def clear_log():
-    try:
-        with open(LOG_FILE, 'w', encoding='utf-8') as f:
-            f.write('')
-    except:
-        pass
-
-
 def parse_time(t):
     """
     支持:
@@ -572,6 +564,12 @@ class VideoCutterApp:
 
 
 def main():
+    try:
+        with open(LOG_FILE, 'w', encoding='utf-8') as f:
+            f.write('')
+    except:
+        pass
+    
     setup_logging()
     logging.info("程序启动")
     
@@ -581,7 +579,6 @@ def main():
     def on_closing():
         logging.info("程序关闭")
         root.destroy()
-        clear_log()
     
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()

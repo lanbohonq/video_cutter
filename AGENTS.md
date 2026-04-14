@@ -24,3 +24,4 @@ python video_cutter_GUI_v2.py   # PyQt6 (pip install PyQt6 opencv-python pygame)
 
 - No tests
 - FFmpeg uses `-c copy` (stream copy, no re-encoding)
+- Both versions log to `video_cutter.log` (cleared each run)
