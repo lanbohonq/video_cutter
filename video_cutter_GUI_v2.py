@@ -14,6 +14,22 @@ from pathlib import Path
 
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_cutter.log")
 
+def resource_path(relative_path):
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(__file__)
+    return os.path.join(base_path, relative_path)
+
+def get_ffmpeg_path():
+    if getattr(sys, 'frozen', False):
+        # 打包后路径
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(__file__)
+
+    return os.path.join(base_path, "ffmpeg.exe")
+
 def setup_logging():
     logging.basicConfig(
         level=logging.INFO,
@@ -624,7 +640,7 @@ class VideoCutterGUI(QMainWindow):
             self._temp_audio_file.close()
 
             cmd = [
-                "ffmpeg", "-y", "-i", video_path,
+                get_ffmpeg_path(), "-y", "-i", video_path,
                 "-vn", "-acodec", "pcm_s16le", "-ar", "44100", "-ac", "2",
                 self.audio_path
             ]
@@ -983,7 +999,7 @@ class VideoCutterGUI(QMainWindow):
             )
 
             cmd = [
-                "ffmpeg", "-y",
+                get_ffmpeg_path(), "-y",
                 "-ss", str(start_sec),
                 "-to", str(end_sec),
                 "-i", self.input_video,
@@ -1079,6 +1095,9 @@ def main():
     
     app = QApplication(sys.argv)
     app.setApplicationName("Video Cutter GUI")
+
+    icon_path = resource_path("icon.ico")
+    app.setWindowIcon(QIcon(icon_path))
 
     app.setStyle('Fusion')
 
