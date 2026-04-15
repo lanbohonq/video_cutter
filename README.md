@@ -54,7 +54,7 @@ cd video_cutter
 
 | 文件 | 界面 | 依赖 | 特点 |
 |------|------|------|------|
-| `src/video_cutter_GUI_v1.py` | tkinter | 无（标准库） | 载量级，适合快速使用 |
+| `src/video_cutter_GUI_v1.py` | tkinter | 无（标准库） | 轻量级，适合快速使用 |
 | `src/video_cutter_GUI_v2.py` | PyQt6 | PyQt6, opencv-python, pygame | 带视频预览，功能完整（推荐） |
 | `src/video_cutter.py` | 命令行 | 无 | 可作为库调用 |
 
@@ -81,23 +81,6 @@ pip install PyQt6 opencv-python pygame
 python src/video_cutter_GUI_v2.py
 ```
 
-无需安装额外依赖，使用 Python 标准库的 tkinter 构建。
-
-**特点:**
-- 轻量级，启动快
-- 支持多种时间格式输入
-- 日志记录到 `video_cutter.log`
-
-### 运行 v2 (PyQt6 版本)
-
-```bash
-# 安装依赖
-pip install PyQt6 opencv-python pygame
-
-# 运行
-python video_cutter_GUI_v2.py
-```
-
 **特点:**
 - 实时视频预览
 - 音频播放支持
@@ -105,6 +88,7 @@ python video_cutter_GUI_v2.py
 - 完整的快捷键支持
 - 片段编辑（双击或点击编辑按钮）
 - 日志记录到 `video_cutter.log`，每次运行清空
+- 自动检测并安装 opencv-python（如缺失）
 
 ### 作为库使用
 

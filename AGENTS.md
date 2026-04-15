@@ -4,7 +4,7 @@ Python GUI tool for extracting video segments using FFmpeg.
 
 ## Requirements
 
-- Python 3.11
+- Python 3.11+
 - FFmpeg (must be on PATH, or use bundled `bin/ffmpeg.exe`)
 
 ## Run
@@ -30,5 +30,7 @@ bin/
 ## Notes
 
 - No tests
+- No package config (no requirements.txt, pyproject.toml, or setup.py)
 - FFmpeg uses `-c copy` (stream copy, no re-encoding)
 - Both GUIs log to `video_cutter.log` in project root (cleared each run)
+- v2 auto-installs opencv-python if missing, but pre-install recommended
