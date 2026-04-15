@@ -12,22 +12,21 @@ import traceback
 import logging
 from pathlib import Path
 
-LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_cutter.log")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOG_FILE = os.path.join(PROJECT_ROOT, "video_cutter.log")
 
 def resource_path(relative_path):
     if getattr(sys, 'frozen', False):
         base_path = sys._MEIPASS
     else:
-        base_path = os.path.dirname(__file__)
+        base_path = os.path.join(os.path.dirname(__file__), "..", "assets")
     return os.path.join(base_path, relative_path)
 
 def get_ffmpeg_path():
     if getattr(sys, 'frozen', False):
-        # 打包后路径
         base_path = sys._MEIPASS
     else:
-        base_path = os.path.dirname(__file__)
-
+        base_path = os.path.join(os.path.dirname(__file__), "..", "bin")
     return os.path.join(base_path, "ffmpeg.exe")
 
 def setup_logging():

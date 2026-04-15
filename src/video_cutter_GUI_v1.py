@@ -15,7 +15,8 @@ from tkinter import (
     Listbox, Scrollbar, VERTICAL, END, ACTIVE, Toplevel
 )
 
-LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_cutter.log")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOG_FILE = os.path.join(PROJECT_ROOT, "video_cutter.log")
 
 def setup_logging():
     logging.basicConfig(

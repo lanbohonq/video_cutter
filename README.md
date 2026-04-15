@@ -54,14 +54,31 @@ cd video_cutter
 
 | 文件 | 界面 | 依赖 | 特点 |
 |------|------|------|------|
-| `video_cutter_GUI_v1.py` | tkinter | 无（标准库） | 轻量级，适合快速使用 |
-| `video_cutter_GUI_v2.py` | PyQt6 | PyQt6, opencv-python, pygame | 带视频预览，功能完整（推荐） |
-| `video_cutter.py` | 命令行 | 无 | 可作为库调用 |
+| `src/video_cutter_GUI_v1.py` | tkinter | 无（标准库） | 载量级，适合快速使用 |
+| `src/video_cutter_GUI_v2.py` | PyQt6 | PyQt6, opencv-python, pygame | 带视频预览，功能完整（推荐） |
+| `src/video_cutter.py` | 命令行 | 无 | 可作为库调用 |
 
 ### 运行 v1 (tkinter 版本)
 
 ```bash
-python video_cutter_GUI_v1.py
+python src/video_cutter_GUI_v1.py
+```
+
+无需安装额外依赖，使用 Python 标准库的 tkinter 构建。
+
+**特点:**
+- 轻量级，启动快
+- 支持多种时间格式输入
+- 日志记录到 `video_cutter.log`
+
+### 运行 v2 (PyQt6 版本)
+
+```bash
+# 安装依赖
+pip install PyQt6 opencv-python pygame
+
+# 运行
+python src/video_cutter_GUI_v2.py
 ```
 
 无需安装额外依赖，使用 Python 标准库的 tkinter 构建。
@@ -92,6 +109,8 @@ python video_cutter_GUI_v2.py
 ### 作为库使用
 
 ```python
+import sys
+sys.path.insert(0, 'src')
 from video_cutter import cut_video_segments
 
 segments = [
@@ -171,12 +190,17 @@ ffmpeg -y -ss <start> -to <end> -i <input> -c copy <output>
 
 ```
 video_cutter/
-├── video_cutter_GUI_v1.py   # tkinter 版本 GUI
-├── video_cutter_GUI_v2.py   # PyQt6 版本 GUI (推荐)
-├── video_cutter.py          # 核心函数库
-├── video_cutter.log         # 运行日志文件
-├── AGENTS.md                # 开发者指南
-└── README.md                # 本文档
+├── src/
+│   ├── video_cutter.py          # 核心函数库
+│   ├── video_cutter_GUI_v1.py   # tkinter 版本 GUI
+│   └── video_cutter_GUI_v2.py   # PyQt6 版本 GUI (推荐)
+├── assets/
+│   └── icon.ico                 # 应用图标
+├── bin/
+│   └── ffmpeg.exe               # 内置 FFmpeg (可选)
+├── video_cutter.log             # 运行日志文件
+├── AGENTS.md                    # 开发者指南
+└── README.md                    # 本文档
 ```
 
 ## 常见问题
